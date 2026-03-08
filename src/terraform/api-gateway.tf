@@ -3,6 +3,7 @@ resource "aws_api_gateway_rest_api" "Api-Card"{
     description= "Api para tarjetas en PIGBANCH"
 }
 
+#RESOURCE
 
 #Card
 
