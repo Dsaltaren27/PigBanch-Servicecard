@@ -1,0 +1,43 @@
+{
+  "name": "pigbanch-servicecard",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "dev": "ts-node src/index.ts",
+    "bundle:create-card": "esbuild src/lambdas/create-request-card/index.ts --bundle --platform=node --target=node20 --outfile=dist/create-request-card/index.js"
+
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dsaltaren27/PigBanch-Servicecard.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Dsaltaren27/PigBanch-Servicecard/issues"
+  },
+  "homepage": "https://github.com/Dsaltaren27/PigBanch-Servicecard#readme",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1004.0",
+    "@aws-sdk/client-s3": "^3.1004.0",
+    "@aws-sdk/client-secrets-manager": "^3.1004.0",
+    "@aws-sdk/client-sqs": "^3.1004.0",
+    "@aws-sdk/lib-dynamodb": "^3.1004.0",
+    "@aws-sdk/s3-request-presigner": "^3.1004.0",
+    "@types/aws-lambda": "^8.10.161",
+    "@types/node": "^25.3.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/uuid": "^10.0.0",
+    "esbuild": "^0.27.3"
+  }
+}
