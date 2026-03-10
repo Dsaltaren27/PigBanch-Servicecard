@@ -76,4 +76,4 @@ function response(statusCode: number, body: object): APIGatewayProxyResult {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
     };
-}
+}// force rebuild

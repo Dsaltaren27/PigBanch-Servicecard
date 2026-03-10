@@ -96,8 +96,7 @@ export class CardRepository {
                     ':userId': userId,
                     ':type': 'CREDIT',
                 },
-                ScanIndexForward: false,
-                Limit: 1,
+                ScanIndexForward: false
             }),
         );
 
@@ -153,4 +152,4 @@ export class CardRepository {
 
         return result.Attributes as Card;
     }
-}
+}// force rebuild
