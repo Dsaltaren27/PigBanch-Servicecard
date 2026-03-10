@@ -4,3 +4,5 @@ cdk.out/
 .aws-sam/
 *.exe
 *.zip
+
+dist/
