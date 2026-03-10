@@ -27,6 +27,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             return response(409, { message: 'Credit card is already ACTIVATED' });
         }
 
+<<<<<<< HEAD
 // 3. Buscar la tarjeta DÉBITO del usuario y contar sus transacciones
         const userCards = await cardRepository.findByUserId(body.userId);
         const debitCard = userCards.find(c => c.type === 'DEBIT');
@@ -36,6 +37,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         }
 
         const transactionCount = await transactionRepository.countByCardId(debitCard.uuid);
+=======
+        // 3. Contar transacciones de la tarjeta
+        const transactionCount = await transactionRepository.countByCardId(card.uuid);
+>>>>>>> origin/feature/lambda
 
         if (transactionCount < REQUIRED_TRANSACTIONS) {
             return response(422, {
@@ -76,4 +81,8 @@ function response(statusCode: number, body: object): APIGatewayProxyResult {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
     };
+<<<<<<< HEAD
 }// force rebuild
+=======
+}
+>>>>>>> origin/feature/lambda
