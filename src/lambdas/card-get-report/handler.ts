@@ -1,17 +1,21 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';  // ← reemplaza SES
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { CardRepository } from '../../shared/db/card.repository';
 import { TransactionRepository } from '../../shared/db/transaction.repository';
+import { UserRepository } from '../../shared/db/user.repository';
 import { Transaction } from '../../shared/models/transaction.model';
 
 const cardRepository = new CardRepository();
 const transactionRepository = new TransactionRepository();
+const userRepository = new UserRepository();
 const s3Client = new S3Client({ region: process.env.AWS_REGION ?? 'us-east-1' });
+const sqs = new SQSClient({ region: 'us-east-1' }); // ← NUEVO
 
 const BUCKET_NAME = process.env.TRANSACTIONS_REPORT_BUCKET ?? 'transactions-report-bucket';
-const URL_EXPIRES_IN = 3600; // 1 hora
+const NOTIFICATION_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/229711348724/notification-email-sqs';
+const URL_EXPIRES_IN = 3600;
 
 interface ReportQuery {
     start?: string;
@@ -27,7 +31,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             return response(400, { message: 'card_id is required in path' });
         }
 
-        // 2. Obtener y validar query params
+        // 2. Validar query params
         const query = parseQuery(event.queryStringParameters);
         const validationError = validateQuery(query);
 
@@ -65,11 +69,14 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         await uploadToS3(fileName, csv);
 
         // 7. Generar presigned URL
-        const signedUrl = await getPresignedUrl(fileName);
+        const downloadUrl = await getPresignedUrl(fileName);
+
+        // 8. ← NUEVO: enviar notificación por SQS
+        await sendNotification(card.user_id, downloadUrl);
 
         return response(200, {
             message: 'Report generated successfully',
-            downloadUrl: signedUrl,
+            downloadUrl,
             fileName,
             totalRecords: transactions.length,
             period: {
@@ -84,6 +91,31 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 };
 
+// ─── NUEVO: NOTIFICACIÓN SQS ──────────────────────────────────────────────────
+
+async function sendNotification(userId: string, downloadUrl: string): Promise<void> {
+    const user = await userRepository.findById(userId);
+
+    if (!user?.email) {
+        console.warn(`User email not found for userId: ${userId} — skipping notification`);
+        return;
+    }
+
+    await sqs.send(new SendMessageCommand({
+        QueueUrl: NOTIFICATION_QUEUE_URL,
+        MessageBody: JSON.stringify({
+            type: 'REPORT.ACTIVITY',
+            email: user.email,
+            data: {
+                date: new Date().toISOString(),
+                url: downloadUrl,
+            },
+        }),
+    }));
+
+    console.log(`Notification REPORT.ACTIVITY sent — userId: ${userId}, email: ${user.email}`);
+}
+
 // ─── CSV ──────────────────────────────────────────────────────────────────────
 
 function generateCsv(transactions: Transaction[]): string {
@@ -94,7 +126,6 @@ function generateCsv(transactions: Transaction[]): string {
             tx.uuid,
             tx.cardId,
             tx.amount,
-            // Escapar comas y comillas dentro del merchant
             `"${tx.merchant.replace(/"/g, '""')}"`,
             tx.type,
             tx.createdAt,
@@ -153,7 +184,6 @@ function validateQuery(query: ReportQuery): string | null {
 }
 
 function buildFileName(cardId: string, start: string, end: string): string {
-    // reports/card-uuid-123/2024-01-01_2024-01-31.csv
     const startSlug = start.split('T')[0];
     const endSlug = end.split('T')[0];
     return `reports/${cardId}/${startSlug}_${endSlug}_${Date.now()}.csv`;

@@ -1,10 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
+const client_sqs_1 = require("@aws-sdk/client-sqs"); // ← NUEVO
 const card_repository_1 = require("../../shared/db/card.repository");
 const transaction_repository_1 = require("../../shared/db/transaction.repository");
+const user_repository_1 = require("../../shared/db/user.repository"); // ← NUEVO
 const cardRepository = new card_repository_1.CardRepository();
 const transactionRepository = new transaction_repository_1.TransactionRepository();
+const userRepository = new user_repository_1.UserRepository(); // ← NUEVO
+const sqs = new client_sqs_1.SQSClient({ region: 'us-east-1' }); // ← NUEVO
+const NOTIFICATION_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/229711348724/notification-email-sqs';
 const handler = async (event) => {
     try {
         // 1. Obtener card_id del path
@@ -31,7 +36,7 @@ const handler = async (event) => {
         if (card.status !== 'ACTIVATED') {
             return response(422, { message: `Card is not active. Current status: ${card.status}` });
         }
-        // 6. Sumar saldo y guardar transacción
+        // 6. Procesar depósito
         return await processSaving(card, body);
     }
     catch (error) {
@@ -50,11 +55,34 @@ async function processSaving(card, body) {
         merchant: body.merchant,
         type: 'SAVING',
     });
+    // ← NUEVO: enviar notificación
+    await sendNotification(card.user_id, body);
     return response(200, {
         message: 'Deposit completed successfully',
         transaction,
         balance: newBalance,
     });
+}
+// ─── NUEVO: NOTIFICACIÓN SQS ──────────────────────────────────────────────────
+async function sendNotification(userId, body) {
+    const user = await userRepository.findById(userId);
+    if (!user?.email) {
+        console.warn(`User email not found for userId: ${userId} — skipping notification`);
+        return;
+    }
+    await sqs.send(new client_sqs_1.SendMessageCommand({
+        QueueUrl: NOTIFICATION_QUEUE_URL,
+        MessageBody: JSON.stringify({
+            type: 'TRANSACTION.SAVE',
+            email: user.email,
+            data: {
+                date: new Date().toISOString(),
+                merchant: body.merchant, // "SAVING"
+                amount: body.amount,
+            },
+        }),
+    }));
+    console.log(`Notification TRANSACTION.SAVE sent — userId: ${userId}, email: ${user.email}, amount: ${body.amount}`);
 }
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 function parseBody(raw) {

@@ -372,6 +372,19 @@
          ]
         }
        ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:Query"
+       ],
+       "Effect": "Allow",
+       "Resource": "arn:aws:dynamodb:us-east-1:229711348724:table/user-table"
+      },
+      {
+       "Action": "sqs:SendMessage",
+       "Effect": "Allow",
+       "Resource": "arn:aws:sqs:us-east-1:229711348724:notification-email-sqs"
       }
      ],
      "Version": "2012-10-17"
@@ -392,7 +405,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-229711348724-us-east-1",
-     "S3Key": "f54ab88f6252c7b177f375cc237e810566e450788a09dd7f6dfc8c20ede75b4b.zip"
+     "S3Key": "fd2bb7d97c6400ddb9abe067edcefdfe6606e25912598095fee2dd742ff2700c.zip"
     },
     "Environment": {
      "Variables": {
@@ -409,6 +422,7 @@
       "TRANSACTIONS_REPORT_BUCKET": {
        "Ref": "S3BucketsTransactionsReportBucket0A2C7BFF"
       },
+      "USER_TABLE_NAME": "user-table",
       "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1"
      }
     },
@@ -430,7 +444,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "CardServiceStack-dev/Lambdas/CreateRequestCardLambda/Resource",
-    "aws:asset:path": "asset.f54ab88f6252c7b177f375cc237e810566e450788a09dd7f6dfc8c20ede75b4b",
+    "aws:asset:path": "asset.fd2bb7d97c6400ddb9abe067edcefdfe6606e25912598095fee2dd742ff2700c",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -623,6 +637,19 @@
          ]
         }
        ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:Query"
+       ],
+       "Effect": "Allow",
+       "Resource": "arn:aws:dynamodb:us-east-1:229711348724:table/user-table"
+      },
+      {
+       "Action": "sqs:SendMessage",
+       "Effect": "Allow",
+       "Resource": "arn:aws:sqs:us-east-1:229711348724:notification-email-sqs"
       }
      ],
      "Version": "2012-10-17"
@@ -643,7 +670,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-229711348724-us-east-1",
-     "S3Key": "48908a6b297cb0301ae21f1f6634bb27304faaf43be8d819656cfdb7ee52b79d.zip"
+     "S3Key": "6096cbe72e471a57aa3b4b284d893f5465bf59c9efb346327f7759628aeb47a5.zip"
     },
     "Environment": {
      "Variables": {
@@ -660,6 +687,7 @@
       "TRANSACTIONS_REPORT_BUCKET": {
        "Ref": "S3BucketsTransactionsReportBucket0A2C7BFF"
       },
+      "USER_TABLE_NAME": "user-table",
       "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1"
      }
     },
@@ -681,7 +709,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "CardServiceStack-dev/Lambdas/CardActivateLambda/Resource",
-    "aws:asset:path": "asset.48908a6b297cb0301ae21f1f6634bb27304faaf43be8d819656cfdb7ee52b79d",
+    "aws:asset:path": "asset.6096cbe72e471a57aa3b4b284d893f5465bf59c9efb346327f7759628aeb47a5",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -822,6 +850,19 @@
          ]
         }
        ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:Query"
+       ],
+       "Effect": "Allow",
+       "Resource": "arn:aws:dynamodb:us-east-1:229711348724:table/user-table"
+      },
+      {
+       "Action": "sqs:SendMessage",
+       "Effect": "Allow",
+       "Resource": "arn:aws:sqs:us-east-1:229711348724:notification-email-sqs"
       }
      ],
      "Version": "2012-10-17"
@@ -842,7 +883,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-229711348724-us-east-1",
-     "S3Key": "12f8fab84580c6e00ab7dc443589363cc829b3253760e3403c73b12b205bc71c.zip"
+     "S3Key": "01c8e7b305921604e8886aa3e752a0846079e19a23cf6ed6ed3310de249bfb69.zip"
     },
     "Environment": {
      "Variables": {
@@ -859,6 +900,7 @@
       "TRANSACTIONS_REPORT_BUCKET": {
        "Ref": "S3BucketsTransactionsReportBucket0A2C7BFF"
       },
+      "USER_TABLE_NAME": "user-table",
       "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1"
      }
     },
@@ -880,7 +922,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "CardServiceStack-dev/Lambdas/CardPurchaseLambda/Resource",
-    "aws:asset:path": "asset.12f8fab84580c6e00ab7dc443589363cc829b3253760e3403c73b12b205bc71c",
+    "aws:asset:path": "asset.01c8e7b305921604e8886aa3e752a0846079e19a23cf6ed6ed3310de249bfb69",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -1021,6 +1063,19 @@
          ]
         }
        ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:Query"
+       ],
+       "Effect": "Allow",
+       "Resource": "arn:aws:dynamodb:us-east-1:229711348724:table/user-table"
+      },
+      {
+       "Action": "sqs:SendMessage",
+       "Effect": "Allow",
+       "Resource": "arn:aws:sqs:us-east-1:229711348724:notification-email-sqs"
       }
      ],
      "Version": "2012-10-17"
@@ -1041,7 +1096,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-229711348724-us-east-1",
-     "S3Key": "e2cc467f5eab602134863059d379af572eef58b79c6f59d815158a10c037bd7d.zip"
+     "S3Key": "193c9d02e43e3f2ac2ae3d74e8e53988720b60c6cc692fd98c5504d6af830cb5.zip"
     },
     "Environment": {
      "Variables": {
@@ -1058,6 +1113,7 @@
       "TRANSACTIONS_REPORT_BUCKET": {
        "Ref": "S3BucketsTransactionsReportBucket0A2C7BFF"
       },
+      "USER_TABLE_NAME": "user-table",
       "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1"
      }
     },
@@ -1079,7 +1135,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "CardServiceStack-dev/Lambdas/CardTransactionSaveLambda/Resource",
-    "aws:asset:path": "asset.e2cc467f5eab602134863059d379af572eef58b79c6f59d815158a10c037bd7d",
+    "aws:asset:path": "asset.193c9d02e43e3f2ac2ae3d74e8e53988720b60c6cc692fd98c5504d6af830cb5",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -1220,6 +1276,19 @@
          ]
         }
        ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:Query"
+       ],
+       "Effect": "Allow",
+       "Resource": "arn:aws:dynamodb:us-east-1:229711348724:table/user-table"
+      },
+      {
+       "Action": "sqs:SendMessage",
+       "Effect": "Allow",
+       "Resource": "arn:aws:sqs:us-east-1:229711348724:notification-email-sqs"
       }
      ],
      "Version": "2012-10-17"
@@ -1240,7 +1309,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-229711348724-us-east-1",
-     "S3Key": "54e167905a1aa4a2eb69bdd3f5d5be54e152cbabd1ca348171a8e9c4181b616d.zip"
+     "S3Key": "35244118be9c69d10a76d1a3e279d32bcd1dbac29d198bb881005207d12fb746.zip"
     },
     "Environment": {
      "Variables": {
@@ -1257,6 +1326,7 @@
       "TRANSACTIONS_REPORT_BUCKET": {
        "Ref": "S3BucketsTransactionsReportBucket0A2C7BFF"
       },
+      "USER_TABLE_NAME": "user-table",
       "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1"
      }
     },
@@ -1278,7 +1348,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "CardServiceStack-dev/Lambdas/CardPaidCreditCardLambda/Resource",
-    "aws:asset:path": "asset.54e167905a1aa4a2eb69bdd3f5d5be54e152cbabd1ca348171a8e9c4181b616d",
+    "aws:asset:path": "asset.35244118be9c69d10a76d1a3e279d32bcd1dbac29d198bb881005207d12fb746",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -1482,6 +1552,19 @@
          ]
         }
        ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:Query"
+       ],
+       "Effect": "Allow",
+       "Resource": "arn:aws:dynamodb:us-east-1:229711348724:table/user-table"
+      },
+      {
+       "Action": "sqs:SendMessage",
+       "Effect": "Allow",
+       "Resource": "arn:aws:sqs:us-east-1:229711348724:notification-email-sqs"
       }
      ],
      "Version": "2012-10-17"
@@ -1502,7 +1585,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-229711348724-us-east-1",
-     "S3Key": "0066c32b30720c0cff99d679b4b668004d9ec7cf2943d8f1ca7e229e082d261c.zip"
+     "S3Key": "e6097620f990fe8fe3de6ddd5f352089fcef400b40e33b612a172fa7457c056a.zip"
     },
     "Environment": {
      "Variables": {
@@ -1519,6 +1602,7 @@
       "TRANSACTIONS_REPORT_BUCKET": {
        "Ref": "S3BucketsTransactionsReportBucket0A2C7BFF"
       },
+      "USER_TABLE_NAME": "user-table",
       "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1"
      }
     },
@@ -1540,7 +1624,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "CardServiceStack-dev/Lambdas/CardGetReportLambda/Resource",
-    "aws:asset:path": "asset.0066c32b30720c0cff99d679b4b668004d9ec7cf2943d8f1ca7e229e082d261c",
+    "aws:asset:path": "asset.e6097620f990fe8fe3de6ddd5f352089fcef400b40e33b612a172fa7457c056a",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -1635,7 +1719,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-229711348724-us-east-1",
-     "S3Key": "8b78f78a4952cd674ba5f338285957c777b9b4bcfb7d88abe2df0bfe4f2b5337.zip"
+     "S3Key": "e551eb1c6f8d5aa5090b2b2782584613718db3e8b69685635cf44c3d4c823f61.zip"
     },
     "Environment": {
      "Variables": {
@@ -1652,6 +1736,7 @@
       "TRANSACTIONS_REPORT_BUCKET": {
        "Ref": "S3BucketsTransactionsReportBucket0A2C7BFF"
       },
+      "USER_TABLE_NAME": "user-table",
       "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1"
      }
     },
@@ -1673,7 +1758,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "CardServiceStack-dev/Lambdas/CardRequestFailedLambda/Resource",
-    "aws:asset:path": "asset.8b78f78a4952cd674ba5f338285957c777b9b4bcfb7d88abe2df0bfe4f2b5337",
+    "aws:asset:path": "asset.e551eb1c6f8d5aa5090b2b2782584613718db3e8b69685635cf44c3d4c823f61",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }

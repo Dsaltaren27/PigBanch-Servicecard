@@ -1,11 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
+const client_sqs_1 = require("@aws-sdk/client-sqs"); // ← NUEVO
 const card_repository_1 = require("../../shared/db/card.repository");
 const score_1 = require("../../shared/utils/score");
+const user_repository_1 = require("../../shared/db/user.repository"); // ← NUEVO
 const cardRepository = new card_repository_1.CardRepository();
-// Triggered by SQS (create-request-card-sqs)
-// Retorna batchItemFailures para que SQS sepa qué mensajes reintentar / enviar al DLQ
+const userRepository = new user_repository_1.UserRepository(); // ← NUEVO
+const sqs = new client_sqs_1.SQSClient({ region: 'us-east-1' }); // ← NUEVO
+const NOTIFICATION_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/229711348724/notification-email-sqs';
 const handler = async (event) => {
     const batchItemFailures = [];
     for (const record of event.Records) {
@@ -35,7 +38,6 @@ async function processRecord(record) {
     }
 }
 // ─── DEBIT CARD ───────────────────────────────────────────────────────────────
-// Status: ACTIVATED inmediatamente | Balance: 0
 async function createDebitCard(userId) {
     const card = await cardRepository.create({
         user_id: userId,
@@ -44,9 +46,10 @@ async function createDebitCard(userId) {
         balance: 0,
     });
     console.log(`Debit card created — uuid: ${card.uuid}, userId: ${userId}`);
+    // ← NUEVO: enviar notificación
+    await sendNotification(userId, card);
 }
 // ─── CREDIT CARD ──────────────────────────────────────────────────────────────
-// Status: PENDING | Balance: límite calculado con score aleatorio
 async function createCreditCard(userId) {
     const score = (0, score_1.generateScore)();
     const creditLimit = (0, score_1.calculateCreditLimit)(score);
@@ -57,6 +60,30 @@ async function createCreditCard(userId) {
         balance: creditLimit,
     });
     console.log(`Credit card created — uuid: ${card.uuid}, userId: ${userId}, score: ${score}, limit: ${creditLimit}`);
+    // ← NUEVO: enviar notificación
+    await sendNotification(userId, card);
+}
+// ─── NUEVO: NOTIFICACIÓN SQS ──────────────────────────────────────────────────
+async function sendNotification(userId, card) {
+    // Buscar email del usuario en user-table
+    const user = await userRepository.findById(userId);
+    if (!user?.email) {
+        console.warn(`User email not found for userId: ${userId} — skipping notification`);
+        return;
+    }
+    await sqs.send(new client_sqs_1.SendMessageCommand({
+        QueueUrl: NOTIFICATION_QUEUE_URL,
+        MessageBody: JSON.stringify({
+            type: 'CARD.CREATE',
+            email: user.email,
+            data: {
+                date: new Date().toISOString(),
+                type: card.type, // "CREDIT" o "DEBIT"
+                amount: card.balance, // límite asignado
+            },
+        }),
+    }));
+    console.log(`Notification CARD.CREATE sent — userId: ${userId}, email: ${user.email}, cardType: ${card.type}`);
 }
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 function parseMessage(body) {

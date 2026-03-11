@@ -1,10 +1,16 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';  // ← NUEVO
 import { CardRepository } from '../../shared/db/card.repository';
 import { TransactionRepository } from '../../shared/db/transaction.repository';
+import { UserRepository } from '../../shared/db/user.repository';     // ← NUEVO
 import { Card } from '../../shared/models/card.model';
 
 const cardRepository = new CardRepository();
 const transactionRepository = new TransactionRepository();
+const userRepository = new UserRepository();                    // ← NUEVO
+const sqs = new SQSClient({ region: 'us-east-1' }); // ← NUEVO
+
+const NOTIFICATION_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/229711348724/notification-email-sqs';
 
 interface PaidBody {
     merchant: string;
@@ -55,9 +61,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 };
 
 // ─── CORE ─────────────────────────────────────────────────────────────────────
-// El balance en tarjeta CREDIT representa el crédito DISPONIBLE
-// Al pagar, se devuelve crédito → balance sube
-// No puede superar el límite original → validamos que no haya overpayment
 
 async function processPayment(card: Card, body: PaidBody): Promise<APIGatewayProxyResult> {
     const newBalance = card.balance + body.amount;
@@ -71,11 +74,40 @@ async function processPayment(card: Card, body: PaidBody): Promise<APIGatewayPro
         type: 'PAYMENT_BALANCE',
     });
 
+    // ← NUEVO: enviar notificación
+    await sendNotification(card.user_id, body);
+
     return response(200, {
         message: 'Payment processed successfully',
         transaction,
         availableCredit: newBalance,
     });
+}
+
+// ─── NUEVO: NOTIFICACIÓN SQS ──────────────────────────────────────────────────
+
+async function sendNotification(userId: string, body: PaidBody): Promise<void> {
+    const user = await userRepository.findById(userId);
+
+    if (!user?.email) {
+        console.warn(`User email not found for userId: ${userId} — skipping notification`);
+        return;
+    }
+
+    await sqs.send(new SendMessageCommand({
+        QueueUrl: NOTIFICATION_QUEUE_URL,
+        MessageBody: JSON.stringify({
+            type: 'TRANSACTION.PAID',
+            email: user.email,
+            data: {
+                date: new Date().toISOString(),
+                merchant: body.merchant, // "PSE"
+                amount: body.amount,
+            },
+        }),
+    }));
+
+    console.log(`Notification TRANSACTION.PAID sent — userId: ${userId}, email: ${user.email}, amount: ${body.amount}`);
 }
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────

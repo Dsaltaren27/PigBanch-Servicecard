@@ -39,6 +39,7 @@ export class CardServiceStack extends cdk.Stack {
             createRequestCardQueue: queues.createRequestCardQueue,
             errorCreateRequestCardQueue: queues.errorCreateRequestCardQueue,
             transactionsReportBucket: buckets.transactionsReportBucket,
+            sesFromEmail:                'henaoandres2405@gmail.com',
         });
 
         // ── API Gateway ───────────────────────────────────────────────────────

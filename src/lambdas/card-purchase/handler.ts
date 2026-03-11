@@ -1,10 +1,16 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';  // ← NUEVO
 import { CardRepository } from '../../shared/db/card.repository';
 import { TransactionRepository } from '../../shared/db/transaction.repository';
+import { UserRepository } from '../../shared/db/user.repository';     // ← NUEVO
 import { Card } from '../../shared/models/card.model';
 
 const cardRepository = new CardRepository();
 const transactionRepository = new TransactionRepository();
+const userRepository = new UserRepository();                    // ← NUEVO
+const sqs = new SQSClient({ region: 'us-east-1' }); // ← NUEVO
+
+const NOTIFICATION_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/229711348724/notification-email-sqs';
 
 interface PurchaseBody {
     merchant: string;
@@ -28,7 +34,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             return response(404, { message: `Card not found: ${body.cardId}` });
         }
 
-        // 2. Validar que la tarjeta esté ACTIVATED
+        // 2. Validar status según tipo de tarjeta
         if (card.status !== 'ACTIVATED' && card.type === 'DEBIT') {
             return response(422, { message: `Card is not active. Current status: ${card.status}` });
         }
@@ -47,7 +53,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 };
 
 // ─── DEBIT ────────────────────────────────────────────────────────────────────
-// Valida que el saldo disponible sea suficiente, luego descuenta
 
 async function processDebitPurchase(card: Card, body: PurchaseBody): Promise<APIGatewayProxyResult> {
     if (card.balance < body.amount) {
@@ -69,6 +74,9 @@ async function processDebitPurchase(card: Card, body: PurchaseBody): Promise<API
         type: 'PURCHASE',
     });
 
+    // ← NUEVO: enviar notificación
+    await sendNotification(card.user_id, body);
+
     return response(200, {
         message: 'Purchase completed successfully',
         transaction,
@@ -77,8 +85,6 @@ async function processDebitPurchase(card: Card, body: PurchaseBody): Promise<API
 }
 
 // ─── CREDIT ───────────────────────────────────────────────────────────────────
-// balance = crédito disponible (lo que queda por usar)
-// Valida que el monto no exceda el crédito disponible
 
 async function processCreditPurchase(card: Card, body: PurchaseBody): Promise<APIGatewayProxyResult> {
     if (card.balance < body.amount) {
@@ -100,11 +106,41 @@ async function processCreditPurchase(card: Card, body: PurchaseBody): Promise<AP
         type: 'PURCHASE',
     });
 
+    // ← NUEVO: enviar notificación
+    await sendNotification(card.user_id, body);
+
     return response(200, {
         message: 'Purchase completed successfully',
         transaction,
         availableCredit: newBalance,
     });
+}
+
+// ─── NUEVO: NOTIFICACIÓN SQS ──────────────────────────────────────────────────
+
+async function sendNotification(userId: string, body: PurchaseBody): Promise<void> {
+    const user = await userRepository.findById(userId);
+
+    if (!user?.email) {
+        console.warn(`User email not found for userId: ${userId} — skipping notification`);
+        return;
+    }
+
+    await sqs.send(new SendMessageCommand({
+        QueueUrl: NOTIFICATION_QUEUE_URL,
+        MessageBody: JSON.stringify({
+            type: 'TRANSACTION.PURCHASE',
+            email: user.email,
+            data: {
+                date: new Date().toISOString(),
+                merchant: body.merchant,
+                cardId: body.cardId,
+                amount: body.amount,
+            },
+        }),
+    }));
+
+    console.log(`Notification TRANSACTION.PURCHASE sent — userId: ${userId}, email: ${user.email}, amount: ${body.amount}`);
 }
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────

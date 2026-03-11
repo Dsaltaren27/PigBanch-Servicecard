@@ -1,12 +1,17 @@
 import { SQSEvent, SQSRecord, SQSBatchResponse, SQSBatchItemFailure } from 'aws-lambda';
+import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';  // ← NUEVO
 import { CardRepository } from '../../shared/db/card.repository';
 import { CreateCardSqsMessage } from '../../shared/models/sqs.model';
 import { generateScore, calculateCreditLimit } from '../../shared/utils/score';
+import { UserRepository } from '../../shared/db/user.repository';     // ← NUEVO
+import { Card } from '../../shared/models/card.model';
 
 const cardRepository = new CardRepository();
+const userRepository = new UserRepository();                           // ← NUEVO
+const sqs = new SQSClient({ region: 'us-east-1' });        // ← NUEVO
 
-// Triggered by SQS (create-request-card-sqs)
-// Retorna batchItemFailures para que SQS sepa qué mensajes reintentar / enviar al DLQ
+const NOTIFICATION_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/229711348724/notification-email-sqs';
+
 export const handler = async (event: SQSEvent): Promise<SQSBatchResponse> => {
     const batchItemFailures: SQSBatchItemFailure[] = [];
 
@@ -39,7 +44,6 @@ async function processRecord(record: SQSRecord): Promise<void> {
 }
 
 // ─── DEBIT CARD ───────────────────────────────────────────────────────────────
-// Status: ACTIVATED inmediatamente | Balance: 0
 
 async function createDebitCard(userId: string): Promise<void> {
     const card = await cardRepository.create({
@@ -50,10 +54,12 @@ async function createDebitCard(userId: string): Promise<void> {
     });
 
     console.log(`Debit card created — uuid: ${card.uuid}, userId: ${userId}`);
+
+    // ← NUEVO: enviar notificación
+    await sendNotification(userId, card);
 }
 
 // ─── CREDIT CARD ──────────────────────────────────────────────────────────────
-// Status: PENDING | Balance: límite calculado con score aleatorio
 
 async function createCreditCard(userId: string): Promise<void> {
     const score = generateScore();
@@ -69,6 +75,36 @@ async function createCreditCard(userId: string): Promise<void> {
     console.log(
         `Credit card created — uuid: ${card.uuid}, userId: ${userId}, score: ${score}, limit: ${creditLimit}`,
     );
+
+    // ← NUEVO: enviar notificación
+    await sendNotification(userId, card);
+}
+
+// ─── NUEVO: NOTIFICACIÓN SQS ──────────────────────────────────────────────────
+
+async function sendNotification(userId: string, card: Card): Promise<void> {
+    // Buscar email del usuario en user-table
+    const user = await userRepository.findById(userId);
+
+    if (!user?.email) {
+        console.warn(`User email not found for userId: ${userId} — skipping notification`);
+        return;
+    }
+
+    await sqs.send(new SendMessageCommand({
+        QueueUrl: NOTIFICATION_QUEUE_URL,
+        MessageBody: JSON.stringify({
+            type: 'CARD.CREATE',
+            email: user.email,
+            data: {
+                date: new Date().toISOString(),
+                type: card.type,    // "CREDIT" o "DEBIT"
+                amount: card.balance, // límite asignado
+            },
+        }),
+    }));
+
+    console.log(`Notification CARD.CREATE sent — userId: ${userId}, email: ${user.email}, cardType: ${card.type}`);
 }
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
