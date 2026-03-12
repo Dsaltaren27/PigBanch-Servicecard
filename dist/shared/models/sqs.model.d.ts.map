@@ -1,1 +1,0 @@
-{"version":3,"file":"sqs.model.d.ts","sourceRoot":"","sources":["../../../src/shared/models/sqs.model.ts"],"names":[],"mappings":"AAAA,MAAM,MAAM,eAAe,GAAG,OAAO,GAAG,QAAQ,CAAC;AAEjD,MAAM,WAAW,oBAAoB;IACjC,MAAM,EAAE,MAAM,CAAC;IACf,OAAO,EAAE,eAAe,CAAC;CAC5B"}
